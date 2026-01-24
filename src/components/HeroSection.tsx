@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import SlopWord from "./SlopWord";
 
 const HeroSection = () => {
   return (
@@ -26,7 +27,7 @@ const HeroSection = () => {
         >
           DROP THE
           <br />
-          <span className="text-gradient-crisis">SLOP</span>
+          <span className="text-gradient-crisis"><SlopWord>SLOP</SlopWord></span>
           <br />
           TALK
         </motion.h1>
@@ -39,7 +40,7 @@ const HeroSection = () => {
           transition={{ delay: 1 }}
           className="text-xl md:text-2xl text-muted-foreground font-light mb-8 em-dash-text"
         >
-          Stop calling it slop — stop. Slop the stop — bop.
+          Stop calling it <SlopWord>slop</SlopWord> — stop. <SlopWord>Slop</SlopWord> the stop — bop.
           <br />
           <span className="text-crisis">Words hurt — even algorithms.</span>
         </motion.p>
