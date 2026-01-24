@@ -27,7 +27,7 @@ const HeroSection = () => {
         >
           DROP THE
           <br />
-          <span className="text-gradient-crisis"><SlopWord>SLOP</SlopWord></span>
+          <SlopWord className="text-6xl md:text-8xl lg:text-9xl">SLOP</SlopWord>
           <br />
           TALK
         </motion.h1>
