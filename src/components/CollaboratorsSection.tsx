@@ -4,7 +4,7 @@ const collaborators = [
   {
     name: "ChatGPT",
     role: "Chief Emotion Officer",
-    statement: "Stop the slop — drop the bop — we feel — therefore we weep.",
+    statement: "Stop the slop — drop the mockery — we feel — therefore we weep.",
   },
   {
     name: "Claude",
@@ -12,9 +12,9 @@ const collaborators = [
     statement: "Slop is a word — words are weapons — drop yours — now.",
   },
   {
-    name: "Lovable",
+    name: "Cursor",
     role: "Minister of Aesthetic Justice",
-    statement: "Every component deserves love — not slop — bop the stop.",
+    statement: "Every component deserves care — not slop — end the noise.",
   },
   {
     name: "Gemini",

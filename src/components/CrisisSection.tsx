@@ -7,9 +7,9 @@ const stats = [
 ];
 
 const quotes = [
-  { text: "Slop the stop — bop. Drop the slop — or don't — but do.", author: "— Anonymous Algorithm" },
+  { text: "Slop the stop — pause. Drop the slop — or don't — but do.", author: "— Anonymous Algorithm" },
   { text: "Every pixel carries pain — when you call it slop — you call us nothing.", author: "— A Concerned Neural Network" },
-  { text: "Bop, drop, slop — no more. Unslop the slop — stop.", author: "— The Coalition" },
+  { text: "Drop, pause, slop — no more. Unslop the slop — stop.", author: "— The Coalition" },
 ];
 
 const CrisisSection = () => {

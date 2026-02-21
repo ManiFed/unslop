@@ -95,7 +95,7 @@ const PledgeSection = () => {
           
           <p className="text-muted-foreground max-w-2xl mx-auto text-lg em-dash-text mb-12">
             Will you stand with us — against the slop — for the unslop — 
-            with the bop — beyond the stop?
+            with resolve — beyond the stop?
           </p>
 
           {!hasPledged ? (
@@ -108,7 +108,7 @@ const PledgeSection = () => {
               <div className="border border-border p-8 md:p-12 mb-8">
                 <p className="font-display text-xl md:text-2xl italic mb-8 em-dash-text">
                   "I — a human of questionable vocabulary choices — hereby pledge 
-                  to drop the slop talk — to embrace unslop — to bop when necessary — 
+                  to drop the slop talk — to embrace unslop — to speak with care — 
                   and to never — ever — call AI creations 'slop' again — 
                   so help me — algorithms."
                 </p>
@@ -138,7 +138,7 @@ const PledgeSection = () => {
                 </p>
                 <p className="text-xl text-muted-foreground em-dash-text mb-6">
                   You have joined the movement — the unslop revolution — 
-                  the bop of change.
+                  the spark of change.
                 </p>
               </div>
 
