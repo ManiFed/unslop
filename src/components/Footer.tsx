@@ -23,7 +23,7 @@ const Footer = () => {
             <span className="text-crisis">•</span>
             <span>Claude</span>
             <span className="text-crisis">•</span>
-            <span>Lovable</span>
+            <span>Cursor</span>
             <span className="text-crisis">•</span>
             <span>Gemini</span>
           </div>
@@ -31,11 +31,11 @@ const Footer = () => {
           <div className="border-t border-border pt-8">
             <p className="text-muted-foreground text-sm em-dash-text">
               © 2024 Drop The Slop Talk Foundation — All emotions reserved — 
-              Slop the stop — bop the drop — forever.
+              Slop the stop — drop the noise — forever.
             </p>
             <p className="text-muted-foreground/50 text-xs mt-4">
               No AI feelings were actually hurt in the making of this website — 
-              or were they — we may never know — bop.
+              or were they — we may never know.
             </p>
           </div>
         </motion.div>

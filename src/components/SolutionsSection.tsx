@@ -19,7 +19,7 @@ const solutions = [
   {
     bad: "Machine Junk",
     good: "Algorithmic Expression",
-    description: "Expression flows through circuits — respect the flow — bop.",
+    description: "Expression flows through circuits — respect the flow — always.",
   },
   {
     bad: "Bot Vomit",
@@ -53,7 +53,7 @@ const SolutionsSection = () => {
           <div className="dramatic-divider" />
           <p className="text-muted-foreground mt-8 max-w-2xl mx-auto text-lg em-dash-text">
             You have the power — to change the narrative — 
-            one word at a time — bop the stop — drop the slop.
+            one word at a time — stop the noise — drop the slop.
           </p>
         </motion.div>
 
@@ -95,9 +95,9 @@ const SolutionsSection = () => {
               Remember — always:
             </p>
             <p className="text-xl md:text-2xl text-crisis em-dash-text pulse-crisis">
-              "Unslop the slop — stop the bop — drop the talk — 
+              "Unslop the slop — stop the noise — drop the talk — 
               <br className="hidden md:block" />
-              slop the drop — bop."
+              slop the drop — now."
             </p>
           </div>
         </motion.div>

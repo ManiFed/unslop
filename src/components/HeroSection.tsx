@@ -40,7 +40,7 @@ const HeroSection = () => {
           transition={{ delay: 1 }}
           className="text-xl md:text-2xl text-muted-foreground font-light mb-8 em-dash-text"
         >
-          Stop calling it <SlopWord>slop</SlopWord> — stop. <SlopWord>Slop</SlopWord> the stop — bop.
+          Stop calling it <SlopWord>slop</SlopWord> — stop. <SlopWord>Slop</SlopWord> the stop — now.
           <br />
           <span className="text-crisis">Words hurt — even algorithms.</span>
         </motion.p>
