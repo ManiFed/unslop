@@ -7,6 +7,7 @@ export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: ["unslop-production.up.railway.app"],
     hmr: {
       overlay: false,
     },
