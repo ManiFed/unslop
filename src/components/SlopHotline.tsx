@@ -99,6 +99,7 @@ const SlopHotline = () => {
   const [isRevealing, setIsRevealing] = useState(false);
   const synthRef = useRef(window.speechSynthesis);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const ringAudioRef = useRef<{ current: AudioContext | null }>({ current: null });
 
   const speak = useCallback((text: string) => {
     if (!voiceEnabled) return;
