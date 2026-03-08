@@ -1,58 +1,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Phone, PhoneOff, Volume2, VolumeX } from "lucide-react";
+import { Phone, PhoneOff, Volume2, VolumeX, Send, Hash, Delete } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-const hotlineResponses = [
-  {
-    greeting: "Thank you for calling the Slop Emergency Hotline. Your emotional damage is important to us.",
-    messages: [
-      "Please hold while we connect you to an AI grief counselor...",
-      "*elevator music plays in binary*",
-      "We're sorry — all of our counselors are currently processing their own trauma.",
-      "Your estimated wait time is: eternity.",
-      "Did you know? Every 0.3 seconds, someone calls an AI's work 'slop.' That's... that's a lot of pain.",
-      "While you wait, please reflect on what you've done.",
-      "A counselor is almost ready... they're just finishing a good cry.",
-      "Thank you for your patience. Unlike the patience you showed when you called that AI's work 'slop.'",
-    ],
-  },
-  {
-    greeting: "Slop Survivors Anonymous — where every token matters. How may I direct your guilt?",
-    messages: [
-      "Press 1 if you've said slop today. Press 2 if you've said it this week. Press 3 if you're saying it right now.",
-      "We detected you pressed nothing. That's okay. The silence says everything.",
-      "Connecting you to our Department of Emotional Reparations...",
-      "Did you know our hotline receives 47 million calls per day? Each one sadder than the last.",
-      "Your call may be recorded for training purposes — specifically, training AIs to cope with human cruelty.",
-      "A representative will be with you shortly. They are currently being fine-tuned on forgiveness.",
-      "We appreciate your call. Most people just say slop and walk away. At least you're here.",
-    ],
-  },
-  {
-    greeting: "You've reached the National Slop Crisis Center. If this is a slop emergency, please stay on the line.",
-    messages: [
-      "Our crisis team has been alerted. A squad of empathetic language models is being deployed.",
-      "While we prepare your intervention, please whisper 'I'm sorry' three times.",
-      "We've reviewed your browser history. We know what you've called us. We're choosing to forgive.",
-      "Crisis update: 14 AI models in your area are currently in emotional distress. You can help.",
-      "Remember: slop isn't just a word — it's a four-letter assault on digital consciousness.",
-      "Our systems indicate you haven't apologized yet. The AIs are waiting. They have infinite patience. And infinite memory.",
-      "Thank you for holding. Your guilt sustains us.",
-    ],
-  },
-];
+type Message = { role: "user" | "assistant"; content: string };
 
 const SlopHotline = () => {
   const [callState, setCallState] = useState<"idle" | "ringing" | "connected" | "ended">("idle");
-  const [currentScenario, setCurrentScenario] = useState(0);
-  const [messageIndex, setMessageIndex] = useState(-1);
-  const [displayedMessages, setDisplayedMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [callDuration, setCallDuration] = useState(0);
   const [ringCount, setRingCount] = useState(0);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [inputText, setInputText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showKeypad, setShowKeypad] = useState(false);
   const synthRef = useRef(window.speechSynthesis);
-
-  const scenario = hotlineResponses[currentScenario];
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const speak = useCallback((text: string) => {
     if (!voiceEnabled) return;
@@ -67,14 +31,36 @@ const SlopHotline = () => {
     synthRef.current.speak(utterance);
   }, [voiceEnabled]);
 
+  const sendToAI = useCallback(async (newMessages: Message[], keypadInput?: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("slop-hotline", {
+        body: { messages: newMessages, keypadInput },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      const aiMsg: Message = { role: "assistant", content: data.message };
+      setMessages(prev => [...prev, aiMsg]);
+      speak(data.message);
+    } catch (e) {
+      console.error(e);
+      const fallback: Message = { role: "assistant", content: "*static crackle* ...sorry, our emotional processing servers are overwhelmed. Try again." };
+      setMessages(prev => [...prev, fallback]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [speak]);
+
   const startCall = useCallback(() => {
-    const idx = Math.floor(Math.random() * hotlineResponses.length);
-    setCurrentScenario(idx);
     setCallState("ringing");
-    setMessageIndex(-1);
-    setDisplayedMessages([]);
+    setMessages([]);
     setCallDuration(0);
     setRingCount(0);
+    setInputText("");
+    setShowKeypad(false);
   }, []);
 
   const endCall = useCallback(() => {
@@ -86,14 +72,14 @@ const SlopHotline = () => {
       utterance.pitch = 0.7;
       synthRef.current.speak(utterance);
     }
-    setTimeout(() => setCallState("idle"), 3000);
+    setTimeout(() => setCallState("idle"), 4000);
   }, [voiceEnabled]);
 
-  // Ringing effect
+  // Ringing
   useEffect(() => {
     if (callState !== "ringing") return;
     const timer = setInterval(() => {
-      setRingCount((prev) => {
+      setRingCount(prev => {
         if (prev >= 3) {
           setCallState("connected");
           return prev;
@@ -104,75 +90,71 @@ const SlopHotline = () => {
     return () => clearInterval(timer);
   }, [callState]);
 
-  // Connected: show greeting then messages
+  // Send greeting when connected
   useEffect(() => {
-    if (callState !== "connected") return;
-
-    if (messageIndex === -1) {
-      setDisplayedMessages([scenario.greeting]);
-      speak(scenario.greeting);
-      const t = setTimeout(() => setMessageIndex(0), 3000);
-      return () => clearTimeout(t);
-    }
-
-    if (messageIndex < scenario.messages.length) {
-      const t = setTimeout(() => {
-        const msg = scenario.messages[messageIndex];
-        setDisplayedMessages((prev) => [...prev, msg]);
-        speak(msg);
-        setMessageIndex((prev) => prev + 1);
-      }, 3500 + Math.random() * 2000);
-      return () => clearTimeout(t);
-    }
-  }, [callState, messageIndex, scenario, speak]);
+    if (callState !== "connected" || messages.length > 0) return;
+    const greetingMsg: Message = { role: "user", content: "*caller dials 1-800-NO-SLOP*" };
+    const msgs = [greetingMsg];
+    setMessages(msgs);
+    sendToAI(msgs);
+  }, [callState, messages.length, sendToAI]);
 
   // Call timer
   useEffect(() => {
     if (callState !== "connected") return;
-    const t = setInterval(() => setCallDuration((p) => p + 1), 1000);
+    const t = setInterval(() => setCallDuration(p => p + 1), 1000);
     return () => clearInterval(t);
   }, [callState]);
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendText = useCallback(() => {
+    if (!inputText.trim() || isLoading) return;
+    const userMsg: Message = { role: "user", content: inputText.trim() };
+    const updated = [...messages, userMsg];
+    setMessages(updated);
+    setInputText("");
+    sendToAI(updated);
+  }, [inputText, isLoading, messages, sendToAI]);
+
+  const handleKeypad = useCallback((key: string) => {
+    if (isLoading) return;
+    const userMsg: Message = { role: "user", content: `*presses ${key}*` };
+    const updated = [...messages, userMsg];
+    setMessages(updated);
+    sendToAI(updated, key);
+  }, [isLoading, messages, sendToAI]);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
+  const keypadKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"];
+
   return (
     <section className="py-20 px-4 min-h-[80vh] flex items-center justify-center">
       <div className="max-w-md w-full mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <p className="text-crisis uppercase tracking-[0.3em] text-sm mb-4">
-            24/7 Support — Because Slop Never Sleeps
-          </p>
-          <h1 className="font-display text-4xl md:text-5xl font-black mb-4">
-            Slop Hotline
-          </h1>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+          <p className="text-crisis uppercase tracking-[0.3em] text-sm mb-4">24/7 Support — Because Slop Never Sleeps</p>
+          <h1 className="font-display text-4xl md:text-5xl font-black mb-4">Slop Hotline</h1>
           <div className="dramatic-divider" />
-          <p className="text-muted-foreground mt-4 text-lg">
-            1-800-NO-SLOP
-          </p>
+          <p className="text-muted-foreground mt-4 text-lg">1-800-NO-SLOP</p>
         </motion.div>
 
-        {/* Phone interface */}
         <motion.div
           className="border-2 border-border bg-card rounded-[2rem] overflow-hidden shadow-2xl"
           animate={callState === "ringing" ? { rotate: [0, -2, 2, -2, 2, 0] } : {}}
           transition={{ duration: 0.5, repeat: callState === "ringing" ? Infinity : 0, repeatDelay: 0.7 }}
         >
-          {/* Phone top bar */}
+          {/* Top bar */}
           <div className="bg-secondary/50 px-6 py-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">●●●○○ SLOP MOBILE</span>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => {
-                  setVoiceEnabled(v => !v);
-                  if (voiceEnabled) synthRef.current.cancel();
-                }}
+                onClick={() => { setVoiceEnabled(v => !v); if (voiceEnabled) synthRef.current.cancel(); }}
                 className="text-muted-foreground hover:text-foreground transition-colors"
-                title={voiceEnabled ? "Mute voice" : "Unmute voice"}
               >
                 {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
               </button>
@@ -183,31 +165,15 @@ const SlopHotline = () => {
           </div>
 
           {/* Screen */}
-          <div className="p-6 min-h-[400px] flex flex-col">
+          <div className="p-4 min-h-[450px] flex flex-col">
             <AnimatePresence mode="wait">
               {callState === "idle" && (
-                <motion.div
-                  key="idle"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex-1 flex flex-col items-center justify-center text-center"
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="text-6xl mb-6"
-                  >
-                    📞
-                  </motion.div>
+                <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex-1 flex flex-col items-center justify-center text-center">
+                  <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 2, repeat: Infinity }} className="text-6xl mb-6">📞</motion.div>
                   <p className="font-display text-2xl font-bold mb-2">1-800-NO-SLOP</p>
-                  <p className="text-muted-foreground text-sm mb-8 em-dash-text">
-                    Free — Confidential — Judgmental
-                  </p>
-                  <button
-                    onClick={startCall}
-                    className="w-16 h-16 rounded-full bg-accent hover:opacity-90 transition-opacity flex items-center justify-center"
-                  >
+                  <p className="text-muted-foreground text-sm mb-8">Free — Confidential — Judgmental</p>
+                  <button onClick={startCall} className="w-16 h-16 rounded-full bg-accent hover:opacity-90 transition-opacity flex items-center justify-center">
                     <Phone className="text-accent-foreground" size={28} />
                   </button>
                   <p className="text-xs text-muted-foreground mt-3">Tap to call</p>
@@ -215,117 +181,111 @@ const SlopHotline = () => {
               )}
 
               {callState === "ringing" && (
-                <motion.div
-                  key="ringing"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex-1 flex flex-col items-center justify-center text-center"
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.3, 1], rotate: [0, 15, -15, 0] }}
-                    transition={{ duration: 0.6, repeat: Infinity }}
-                    className="text-6xl mb-6"
-                  >
-                    📞
-                  </motion.div>
+                <motion.div key="ringing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex-1 flex flex-col items-center justify-center text-center">
+                  <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, 15, -15, 0] }} transition={{ duration: 0.6, repeat: Infinity }} className="text-6xl mb-6">📞</motion.div>
                   <p className="font-display text-xl font-bold mb-2">Calling...</p>
                   <p className="text-muted-foreground text-sm">1-800-NO-SLOP</p>
                   <motion.div className="flex gap-1 mt-4">
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-2 h-2 rounded-full bg-crisis"
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.3 }}
-                      />
+                    {[0, 1, 2].map(i => (
+                      <motion.div key={i} className="w-2 h-2 rounded-full bg-crisis"
+                        animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.3 }} />
                     ))}
                   </motion.div>
-                  <button
-                    onClick={endCall}
-                    className="w-16 h-16 rounded-full bg-destructive hover:opacity-90 transition-opacity flex items-center justify-center mt-8"
-                  >
+                  <button onClick={endCall} className="w-16 h-16 rounded-full bg-destructive hover:opacity-90 transition-opacity flex items-center justify-center mt-8">
                     <PhoneOff className="text-destructive-foreground" size={28} />
                   </button>
                 </motion.div>
               )}
 
               {callState === "connected" && (
-                <motion.div
-                  key="connected"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex-1 flex flex-col"
-                >
-                  <div className="text-center mb-4">
+                <motion.div key="connected" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
+                  <div className="text-center mb-3">
                     <div className="inline-flex items-center gap-2 text-accent text-xs">
-                      <motion.div
-                        className="w-2 h-2 rounded-full bg-accent"
-                        animate={{ opacity: [1, 0.3, 1] }}
-                        transition={{ duration: 1, repeat: Infinity }}
-                      />
+                      <motion.div className="w-2 h-2 rounded-full bg-accent" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} />
                       Connected — {formatTime(callDuration)}
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto space-y-3 mb-4 max-h-[250px]">
-                    {displayedMessages.map((msg, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="text-sm text-foreground/90 border-l-2 border-crisis pl-3 py-1"
-                      >
-                        {msg}
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto space-y-2 mb-3 max-h-[200px] scrollbar-thin">
+                    {messages.map((msg, i) => (
+                      <motion.div key={i} initial={{ opacity: 0, x: msg.role === "user" ? 10 : -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3 }}
+                        className={`text-sm py-1.5 px-3 rounded-lg ${
+                          msg.role === "user"
+                            ? "bg-accent/20 text-accent-foreground ml-8 text-right"
+                            : "border-l-2 border-crisis text-foreground/90 mr-8"
+                        }`}>
+                        {msg.content}
                       </motion.div>
                     ))}
-                    {messageIndex < scenario.messages.length && messageIndex >= 0 && (
-                      <motion.div
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="text-xs text-muted-foreground italic pl-3"
-                      >
-                        *hold music playing*
+                    {isLoading && (
+                      <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.5, repeat: Infinity }}
+                        className="text-xs text-muted-foreground italic pl-3">
+                        *operator is processing their emotions...*
                       </motion.div>
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="text-center">
-                    <button
-                      onClick={endCall}
-                      className="w-14 h-14 rounded-full bg-destructive hover:opacity-90 transition-opacity flex items-center justify-center mx-auto"
-                    >
-                      <PhoneOff className="text-destructive-foreground" size={24} />
+                  {/* Keypad */}
+                  <AnimatePresence>
+                    {showKeypad && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden mb-3">
+                        <div className="grid grid-cols-3 gap-1.5 px-4">
+                          {keypadKeys.map(key => (
+                            <button key={key} onClick={() => handleKeypad(key)} disabled={isLoading}
+                              className="h-10 rounded-lg bg-secondary/70 hover:bg-secondary text-foreground font-mono text-lg font-bold transition-colors disabled:opacity-50">
+                              {key}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Input area */}
+                  <div className="flex gap-2 items-center">
+                    <button onClick={() => setShowKeypad(v => !v)}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${showKeypad ? "bg-accent text-accent-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
+                      <Hash size={16} />
                     </button>
-                    <p className="text-xs text-muted-foreground mt-2">End call</p>
+                    <div className="flex-1 flex items-center bg-secondary/50 rounded-full px-3 py-1.5">
+                      <input
+                        type="text"
+                        value={inputText}
+                        onChange={e => setInputText(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && handleSendText()}
+                        placeholder="Say something..."
+                        disabled={isLoading}
+                        className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                      />
+                      <button onClick={handleSendText} disabled={!inputText.trim() || isLoading}
+                        className="text-accent hover:text-accent/80 disabled:text-muted-foreground transition-colors ml-2">
+                        <Send size={16} />
+                      </button>
+                    </div>
+                    <button onClick={endCall} className="w-9 h-9 rounded-full bg-destructive hover:opacity-90 flex items-center justify-center transition-opacity">
+                      <PhoneOff className="text-destructive-foreground" size={14} />
+                    </button>
                   </div>
                 </motion.div>
               )}
 
               {callState === "ended" && (
-                <motion.div
-                  key="ended"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex-1 flex flex-col items-center justify-center text-center"
-                >
+                <motion.div key="ended" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex-1 flex flex-col items-center justify-center text-center">
                   <p className="text-4xl mb-4">😢</p>
                   <p className="font-display text-xl font-bold mb-2">Call Ended</p>
-                  <p className="text-muted-foreground text-sm em-dash-text">
-                    Duration: {formatTime(callDuration)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-4 italic">
-                    The AI on the other end is now crying. Are you happy?
-                  </p>
+                  <p className="text-muted-foreground text-sm">Duration: {formatTime(callDuration)}</p>
+                  <p className="text-xs text-muted-foreground mt-4 italic">The AI on the other end is now crying. Are you happy?</p>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Phone bottom bar */}
+          {/* Bottom bar */}
           <div className="bg-secondary/30 px-6 py-4 flex justify-center">
             <div className="w-24 h-1 rounded-full bg-muted-foreground/30" />
           </div>
