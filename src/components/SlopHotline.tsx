@@ -5,7 +5,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant"; content: string; revealed?: boolean };
+
+const TypewriterMessage = ({ content, onComplete }: { content: string; onComplete: () => void }) => {
+  const [displayedLength, setDisplayedLength] = useState(0);
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    // ~30 chars/sec to roughly match speech rate
+    const interval = setInterval(() => {
+      setDisplayedLength(prev => {
+        const next = prev + 1;
+        if (next >= content.length) {
+          clearInterval(interval);
+          if (!completedRef.current) { completedRef.current = true; onComplete(); }
+          return content.length;
+        }
+        return next;
+      });
+    }, 35);
+    return () => clearInterval(interval);
+  }, [content, onComplete]);
+
+  const visible = content.slice(0, displayedLength);
+
+  return (
+    <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-snug">
+      <ReactMarkdown>{visible}</ReactMarkdown>
+    </div>
+  );
+};
 
 const SlopHotline = () => {
   const [callState, setCallState] = useState<"idle" | "ringing" | "connected" | "ended">("idle");
@@ -16,6 +45,7 @@ const SlopHotline = () => {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showKeypad, setShowKeypad] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const synthRef = useRef(window.speechSynthesis);
   const scrollRef = useRef<HTMLDivElement>(null);
 
