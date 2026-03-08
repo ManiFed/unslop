@@ -1,4 +1,5 @@
 import Navigation from "@/components/Navigation";
+import NewsTicker from "@/components/NewsTicker";
 import HeroSection from "@/components/HeroSection";
 import CrisisSection from "@/components/CrisisSection";
 import StatisticsSection from "@/components/StatisticsSection";
@@ -8,8 +9,9 @@ import SlopOMeter from "@/components/SlopOMeter";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-background pt-24">
       <Navigation />
+      <NewsTicker />
       <HeroSection />
       <CrisisSection />
       <StatisticsSection />
