@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useCallback } from "react";
+import { useAudio } from "@/components/AudioSystem";
 
 interface SlopWordProps {
   children?: string;
@@ -8,9 +9,11 @@ interface SlopWordProps {
 
 const SlopWord = ({ children = "slop", className = "" }: SlopWordProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { playGlitch } = useAudio();
 
   const handleHoverStart = useCallback(() => {
     setIsHovered(true);
+    playGlitch();
     // Add screen shake to body
     document.body.classList.add("slop-shake");
     // Add red flash overlay

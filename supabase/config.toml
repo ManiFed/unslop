@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.slop-translator]
 verify_jwt = false
+
+[functions.intervention-letter]
+verify_jwt = false
