@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { AudioToggle } from "@/components/AudioSystem";
 
 const navLinks = [
   { path: "/", label: "Home" },
