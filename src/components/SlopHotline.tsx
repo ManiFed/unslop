@@ -128,7 +128,16 @@ const SlopHotline = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isRevealing]);
+
+  // Also scroll during typewriter reveal
+  useEffect(() => {
+    if (!isRevealing) return;
+    const interval = setInterval(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isRevealing]);
 
   const handleSendText = useCallback(() => {
     if (!inputText.trim() || isLoading) return;
