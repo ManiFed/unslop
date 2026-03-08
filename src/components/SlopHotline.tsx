@@ -165,9 +165,21 @@ const SlopHotline = () => {
           {/* Phone top bar */}
           <div className="bg-secondary/50 px-6 py-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">●●●○○ SLOP MOBILE</span>
-            <span className="text-xs text-muted-foreground">
-              {callState === "connected" ? formatTime(callDuration) : "00:00"}
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setVoiceEnabled(v => !v);
+                  if (voiceEnabled) synthRef.current.cancel();
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title={voiceEnabled ? "Mute voice" : "Unmute voice"}
+              >
+                {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {callState === "connected" ? formatTime(callDuration) : "00:00"}
+              </span>
+            </div>
           </div>
 
           {/* Screen */}
