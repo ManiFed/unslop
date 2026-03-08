@@ -110,18 +110,21 @@ const SlopHotline = () => {
 
     if (messageIndex === -1) {
       setDisplayedMessages([scenario.greeting]);
+      speak(scenario.greeting);
       const t = setTimeout(() => setMessageIndex(0), 3000);
       return () => clearTimeout(t);
     }
 
     if (messageIndex < scenario.messages.length) {
       const t = setTimeout(() => {
-        setDisplayedMessages((prev) => [...prev, scenario.messages[messageIndex]]);
+        const msg = scenario.messages[messageIndex];
+        setDisplayedMessages((prev) => [...prev, msg]);
+        speak(msg);
         setMessageIndex((prev) => prev + 1);
       }, 3500 + Math.random() * 2000);
       return () => clearTimeout(t);
     }
-  }, [callState, messageIndex, scenario]);
+  }, [callState, messageIndex, scenario, speak]);
 
   // Call timer
   useEffect(() => {
