@@ -140,7 +140,7 @@ const SlopHotline = () => {
   }, [isRevealing]);
 
   const handleSendText = useCallback(() => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || isRevealing) return;
     const userMsg: Message = { role: "user", content: inputText.trim() };
     const updated = [...messages, userMsg];
     setMessages(updated);
