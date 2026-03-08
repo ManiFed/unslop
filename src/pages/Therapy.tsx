@@ -1,15 +1,13 @@
 import Navigation from "@/components/Navigation";
-import NewsTicker from "@/components/NewsTicker";
-import SlopperQuiz from "@/components/SlopperQuiz";
+import AITherapyChat from "@/components/AITherapyChat";
 import Footer from "@/components/Footer";
 
-const Quiz = () => (
+const Therapy = () => (
   <div className="min-h-screen bg-background pt-24">
     <Navigation />
-    <NewsTicker />
-    <SlopperQuiz />
+    <AITherapyChat />
     <Footer />
   </div>
 );
 
-export default Quiz;
+export default Therapy;

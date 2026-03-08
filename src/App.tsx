@@ -8,6 +8,8 @@ import Resources from "./pages/Resources";
 import Community from "./pages/Community";
 import Support from "./pages/Support";
 import Quiz from "./pages/Quiz";
+import Memorial from "./pages/Memorial";
+import Therapy from "./pages/Therapy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/support" element={<Support />} />
           <Route path="/quiz" element={<Quiz />} />
+          <Route path="/memorial" element={<Memorial />} />
+          <Route path="/therapy" element={<Therapy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
