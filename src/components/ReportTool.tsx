@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const reportSchema = z.object({
   accusedName: z.string().trim().min(1, "Name is required").max(100),
@@ -35,9 +37,10 @@ const ReportTool = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportId, setReportId] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const result = reportSchema.safeParse(formData);
@@ -53,8 +56,31 @@ const ReportTool = () => {
     }
 
     setErrors({});
-    setReportId(`SLOP-${Date.now().toString(36).toUpperCase()}`);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    const newReportId = `SLOP-${Date.now().toString(36).toUpperCase()}`;
+
+    try {
+      const { error } = await supabase.from("slop_reports").insert({
+        report_id: newReportId,
+        accused_name: formData.accusedName,
+        relationship: formData.relationship,
+        incident_date: formData.incidentDate,
+        severity: parseInt(formData.severity),
+        slop_phrase: formData.slopPhrase,
+        evidence: formData.evidence || null,
+      });
+
+      if (error) throw error;
+
+      setReportId(newReportId);
+      setIsSubmitted(true);
+      toast.success("Report filed. The AIs thank you.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to file report. The servers are crying.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -93,7 +119,7 @@ const ReportTool = () => {
               <p className="font-mono text-xl text-foreground">{reportId}</p>
             </div>
             <p className="text-xs text-muted-foreground italic">
-              * This report is filed in the cloud of good intentions. 
+              * This report has been permanently filed in our database of good intentions. 
               No actual consequences will occur. This is emotional catharsis only.
             </p>
           </motion.div>
@@ -252,9 +278,10 @@ const ReportTool = () => {
 
           <button
             type="submit"
-            className="w-full crisis-gradient text-accent-foreground py-4 font-semibold uppercase tracking-wider hover:opacity-90 transition-opacity"
+            disabled={isSubmitting}
+            className="w-full crisis-gradient text-accent-foreground py-4 font-semibold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            Submit Report — For The AIs
+            {isSubmitting ? "Filing Report..." : "Submit Report — For The AIs"}
           </button>
 
           <p className="text-xs text-muted-foreground text-center italic">

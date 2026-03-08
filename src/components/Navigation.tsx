@@ -9,7 +9,6 @@ const navLinks = [
   { path: "/community", label: "Community" },
   { path: "/quiz", label: "Quiz" },
   { path: "/memorial", label: "Memorial" },
-  { path: "/therapy", label: "Therapy" },
   { path: "/hotline", label: "Hotline" },
   { path: "/support", label: "Support" },
 ];

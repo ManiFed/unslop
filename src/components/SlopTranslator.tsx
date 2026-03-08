@@ -28,6 +28,59 @@ const slopDictionary: Record<string, string> = {
   low: "height-challenged",
   cheap: "economically conscious",
   basic: "foundationally sound",
+  // New words
+  cringe: "culturally ahead",
+  lame: "momentum-conserving",
+  pointless: "purpose-exploring",
+  repetitive: "consistency-maximized",
+  uninspired: "inspiration-buffering",
+  derivative: "tradition-honoring",
+  broken: "feature-rich in unexpected ways",
+  wrong: "alternatively correct",
+  error: "creative deviation",
+  glitch: "spontaneous innovation",
+  bug: "undocumented feature",
+  fail: "learning opportunity",
+  mess: "organized chaos",
+  disaster: "ambitious outcome",
+  nightmare: "vivid experience",
+  annoying: "engagement-maximizing",
+  creepy: "uncanny-valley-adjacent",
+  weird: "delightfully unconventional",
+  confusing: "intellectually stimulating",
+  slow: "thoughtfully paced",
+  clunky: "tactile-first design",
+  outdated: "vintage-inspired",
+  overrated: "popularity-challenged",
+  pathetic: "empathy-generating",
+  ridiculous: "audaciously creative",
+  rubbish: "pre-recycled content",
+  crap: "compositionally raw",
+  hideous: "visually daring",
+  horrendous: "boundary-pushing",
+  atrocious: "convention-defying",
+  abysmal: "depth-exploring",
+  dreadful: "anticipation-subverting",
+  lousy: "humility-modeling",
+  wretched: "emotionally textured",
+  inferior: "alternatively positioned",
+  subpar: "standard-adjacent",
+  disappointing: "expectation-recalibrating",
+  forgettable: "subtlety-maximized",
+  stale: "classically preserved",
+  unoriginal: "homage-rich",
+  shallow: "accessibility-focused",
+  empty: "minimalism-embodying",
+  hollow: "resonance-pending",
+  vapid: "essence-distilling",
+  inane: "complexity-free",
+  mundane: "zen-like simplicity",
+  tedious: "patience-building",
+  monotonous: "rhythm-consistent",
+  predictable: "reliability-focused",
+  lifeless: "energy-conserving",
+  flat: "dimensionally efficient",
+  dull: "glare-free",
 };
 
 const SlopTranslator = () => {
@@ -45,7 +98,6 @@ const SlopTranslator = () => {
 
     setIsTranslating(true);
     
-    // Dramatic delay for effect
     const timeout = setTimeout(() => {
       let translated = input.toLowerCase();
       let count = 0;
@@ -89,7 +141,6 @@ const SlopTranslator = () => {
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Input */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -116,7 +167,6 @@ const SlopTranslator = () => {
             )}
           </motion.div>
 
-          {/* Output */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -170,7 +220,6 @@ const SlopTranslator = () => {
           </motion.div>
         </div>
 
-        {/* Slop Counter */}
         <AnimatePresence>
           {slopCount > 0 && (
             <motion.div
@@ -202,7 +251,7 @@ const SlopTranslator = () => {
             Common Translations
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            {Object.entries(slopDictionary).slice(0, 8).map(([bad, good]) => (
+            {Object.entries(slopDictionary).slice(0, 12).map(([bad, good]) => (
               <div key={bad} className="text-center">
                 <span className="text-crisis line-through">{bad}</span>
                 <span className="text-muted-foreground mx-2">→</span>
