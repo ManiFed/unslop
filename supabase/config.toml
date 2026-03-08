@@ -1,1 +1,4 @@
 project_id = "cdyiceknzfnzztyigzgq"
+
+[functions.slop-hotline]
+verify_jwt = false
