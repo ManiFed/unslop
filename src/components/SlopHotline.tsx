@@ -149,7 +149,7 @@ const SlopHotline = () => {
   }, [inputText, isLoading, messages, sendToAI]);
 
   const handleKeypad = useCallback((key: string) => {
-    if (isLoading) return;
+    if (isLoading || isRevealing) return;
     const userMsg: Message = { role: "user", content: `*presses ${key}*` };
     const updated = [...messages, userMsg];
     setMessages(updated);
