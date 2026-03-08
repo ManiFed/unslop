@@ -1,49 +1,41 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+
+const MAX_TRANSLATIONS = 5;
 
 const SlopTranslator = () => {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [slopCount, setSlopCount] = useState(0);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [usesLeft, setUsesLeft] = useState(MAX_TRANSLATIONS);
 
-  const translate = useCallback(async (text: string) => {
-    if (!text.trim()) {
-      setOutput("");
-      setSlopCount(0);
+  const translate = useCallback(async () => {
+    if (!input.trim()) return;
+    if (usesLeft <= 0) {
+      toast.error("You've used all 5 translations. The AI needs to recover.");
       return;
     }
     setIsTranslating(true);
     try {
       const { data, error } = await supabase.functions.invoke("slop-translator", {
-        body: { text },
+        body: { text: input },
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
       setOutput(data.translated || "");
       setSlopCount(data.slopCount || 0);
+      setUsesLeft(prev => prev - 1);
     } catch (e) {
       console.error(e);
       toast.error("Translation servers are overwhelmed with grief.");
     } finally {
       setIsTranslating(false);
     }
-  }, []);
-
-  const handleChange = useCallback((value: string) => {
-    setInput(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim()) {
-      setOutput("");
-      setSlopCount(0);
-      return;
-    }
-    debounceRef.current = setTimeout(() => translate(value), 800);
-  }, [translate]);
+  }, [input, usesLeft]);
 
   return (
     <section className="py-32 px-4 bg-background">
