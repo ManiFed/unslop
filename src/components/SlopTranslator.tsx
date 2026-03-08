@@ -72,10 +72,23 @@ const SlopTranslator = () => {
             </label>
             <textarea
               value={input}
-              onChange={(e) => handleChange(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); translate(); } }}
               placeholder="Type something mean about AI here..."
               className="w-full h-48 bg-card border-2 border-border p-4 text-foreground placeholder:text-muted-foreground focus:border-crisis focus:outline-none transition-colors resize-none font-mono"
             />
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {usesLeft} translation{usesLeft !== 1 ? "s" : ""} remaining
+              </span>
+              <button
+                onClick={translate}
+                disabled={isTranslating || !input.trim() || usesLeft <= 0}
+                className="px-4 py-2 bg-crisis text-background font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {usesLeft <= 0 ? "Limit Reached" : "Translate"}
+              </button>
+            </div>
             {input && (
               <motion.div
                 initial={{ opacity: 0 }}
