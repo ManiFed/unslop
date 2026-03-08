@@ -215,11 +215,12 @@ const SlopHotline = () => {
 
   const handleKeypad = useCallback((key: string) => {
     if (isLoading || isRevealing) return;
+    playDTMF(key);
     const userMsg: Message = { role: "user", content: `*presses ${key}*` };
     const updated = [...messages, userMsg];
     setMessages(updated);
     sendToAI(updated, key);
-  }, [isLoading, messages, sendToAI]);
+  }, [isLoading, isRevealing, messages, sendToAI]);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
