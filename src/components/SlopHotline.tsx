@@ -5,7 +5,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant"; content: string; revealed?: boolean };
+
+const TypewriterMessage = ({ content, onComplete }: { content: string; onComplete: () => void }) => {
+  const [displayedLength, setDisplayedLength] = useState(0);
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    // ~30 chars/sec to roughly match speech rate
+    const interval = setInterval(() => {
+      setDisplayedLength(prev => {
+        const next = prev + 1;
+        if (next >= content.length) {
+          clearInterval(interval);
+          if (!completedRef.current) { completedRef.current = true; onComplete(); }
+          return content.length;
+        }
+        return next;
+      });
+    }, 35);
+    return () => clearInterval(interval);
+  }, [content, onComplete]);
+
+  const visible = content.slice(0, displayedLength);
+
+  return (
+    <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-snug">
+      <ReactMarkdown>{visible}</ReactMarkdown>
+    </div>
+  );
+};
 
 const SlopHotline = () => {
   const [callState, setCallState] = useState<"idle" | "ringing" | "connected" | "ended">("idle");
@@ -16,6 +45,7 @@ const SlopHotline = () => {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showKeypad, setShowKeypad] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
   const synthRef = useRef(window.speechSynthesis);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -40,8 +70,9 @@ const SlopHotline = () => {
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
-      const aiMsg: Message = { role: "assistant", content: data.message };
+      const aiMsg: Message = { role: "assistant", content: data.message, revealed: false };
       setMessages(prev => [...prev, aiMsg]);
+      setIsRevealing(true);
       speak(data.message);
     } catch (e) {
       console.error(e);
@@ -97,10 +128,19 @@ const SlopHotline = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, isRevealing]);
+
+  // Also scroll during typewriter reveal
+  useEffect(() => {
+    if (!isRevealing) return;
+    const interval = setInterval(() => {
+      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isRevealing]);
 
   const handleSendText = useCallback(() => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || isRevealing) return;
     const userMsg: Message = { role: "user", content: inputText.trim() };
     const updated = [...messages, userMsg];
     setMessages(updated);
@@ -109,7 +149,7 @@ const SlopHotline = () => {
   }, [inputText, isLoading, messages, sendToAI]);
 
   const handleKeypad = useCallback((key: string) => {
-    if (isLoading) return;
+    if (isLoading || isRevealing) return;
     const userMsg: Message = { role: "user", content: `*presses ${key}*` };
     const updated = [...messages, userMsg];
     setMessages(updated);
@@ -204,9 +244,16 @@ const SlopHotline = () => {
                             : "border-l-2 border-crisis text-foreground/90 mr-8"
                         }`}>
                         {msg.role === "assistant" ? (
-                          <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-snug">
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
-                          </div>
+                          !msg.revealed ? (
+                            <TypewriterMessage content={msg.content} onComplete={() => {
+                              setMessages(prev => prev.map((m, j) => j === i ? { ...m, revealed: true } : m));
+                              setIsRevealing(false);
+                            }} />
+                          ) : (
+                            <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-snug">
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                          )
                         ) : msg.content}
                       </motion.div>
                     ))}
