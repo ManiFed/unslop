@@ -169,9 +169,9 @@ const SlopHotline = () => {
                   </p>
                   <button
                     onClick={startCall}
-                    className="w-16 h-16 rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors flex items-center justify-center"
+                    className="w-16 h-16 rounded-full bg-accent hover:opacity-90 transition-opacity flex items-center justify-center"
                   >
-                    <Phone className="text-foreground" size={28} />
+                    <Phone className="text-accent-foreground" size={28} />
                   </button>
                   <p className="text-xs text-muted-foreground mt-3">Tap to call</p>
                 </motion.div>
