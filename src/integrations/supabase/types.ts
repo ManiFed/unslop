@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      slop_reports: {
+        Row: {
+          accused_name: string
+          created_at: string
+          evidence: string | null
+          id: string
+          incident_date: string
+          relationship: string
+          report_id: string
+          severity: number
+          slop_phrase: string
+        }
+        Insert: {
+          accused_name: string
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          incident_date: string
+          relationship: string
+          report_id: string
+          severity: number
+          slop_phrase: string
+        }
+        Update: {
+          accused_name?: string
+          created_at?: string
+          evidence?: string | null
+          id?: string
+          incident_date?: string
+          relationship?: string
+          report_id?: string
+          severity?: number
+          slop_phrase?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
