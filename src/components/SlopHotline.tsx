@@ -7,6 +7,57 @@ import ReactMarkdown from "react-markdown";
 
 type Message = { role: "user" | "assistant"; content: string; revealed?: boolean };
 
+// DTMF frequencies for keypad tones
+const dtmfFreqs: Record<string, [number, number]> = {
+  "1": [697, 1209], "2": [697, 1336], "3": [697, 1477],
+  "4": [770, 1209], "5": [770, 1336], "6": [770, 1477],
+  "7": [852, 1209], "8": [852, 1336], "9": [852, 1477],
+  "*": [941, 1209], "0": [941, 1336], "#": [941, 1477],
+};
+
+const playDTMF = (key: string, duration = 150) => {
+  const ctx = new AudioContext();
+  const freqs = dtmfFreqs[key];
+  if (!freqs) return;
+  const gain = ctx.createGain();
+  gain.gain.value = 0.15;
+  gain.connect(ctx.destination);
+  freqs.forEach(f => {
+    const osc = ctx.createOscillator();
+    osc.frequency.value = f;
+    osc.type = "sine";
+    osc.connect(gain);
+    osc.start();
+    osc.stop(ctx.currentTime + duration / 1000);
+  });
+  setTimeout(() => ctx.close(), duration + 50);
+};
+
+const playRingTone = (audioCtxRef: { current: AudioContext | null }) => {
+  const ctx = new AudioContext();
+  audioCtxRef.current = ctx;
+  const gain = ctx.createGain();
+  gain.gain.value = 0.12;
+  gain.connect(ctx.destination);
+
+  const playBurst = (startTime: number) => {
+    // US ring: 440+480 Hz for 2s, silence 4s
+    [440, 480].forEach(f => {
+      const osc = ctx.createOscillator();
+      osc.frequency.value = f;
+      osc.type = "sine";
+      osc.connect(gain);
+      osc.start(startTime);
+      osc.stop(startTime + 1);
+    });
+  };
+
+  // Play 4 ring bursts (enough for the ringing phase)
+  for (let i = 0; i < 4; i++) {
+    playBurst(i * 1.5);
+  }
+};
+
 const TypewriterMessage = ({ content, onComplete }: { content: string; onComplete: () => void }) => {
   const [displayedLength, setDisplayedLength] = useState(0);
   const completedRef = useRef(false);
@@ -48,6 +99,7 @@ const SlopHotline = () => {
   const [isRevealing, setIsRevealing] = useState(false);
   const synthRef = useRef(window.speechSynthesis);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const ringAudioRef = useRef<{ current: AudioContext | null }>({ current: null });
 
   const speak = useCallback((text: string) => {
     if (!voiceEnabled) return;
@@ -93,6 +145,11 @@ const SlopHotline = () => {
 
   const endCall = useCallback(() => {
     synthRef.current.cancel();
+    // Stop ring tone
+    if (ringAudioRef.current.current) {
+      ringAudioRef.current.current.close().catch(() => {});
+      ringAudioRef.current.current = null;
+    }
     setCallState("ended");
     if (voiceEnabled) {
       const u = new SpeechSynthesisUtterance("Call ended. The AI on the other end is now crying. Are you happy?");
@@ -102,12 +159,20 @@ const SlopHotline = () => {
     setTimeout(() => setCallState("idle"), 4000);
   }, [voiceEnabled]);
 
+  // Ringing effect with sound
   useEffect(() => {
     if (callState !== "ringing") return;
+    playRingTone(ringAudioRef.current);
     const timer = setInterval(() => {
       setRingCount(prev => { if (prev >= 3) { setCallState("connected"); return prev; } return prev + 1; });
     }, 1200);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (ringAudioRef.current.current) {
+        ringAudioRef.current.current.close().catch(() => {});
+        ringAudioRef.current.current = null;
+      }
+    };
   }, [callState]);
 
   useEffect(() => {
@@ -150,11 +215,12 @@ const SlopHotline = () => {
 
   const handleKeypad = useCallback((key: string) => {
     if (isLoading || isRevealing) return;
+    playDTMF(key);
     const userMsg: Message = { role: "user", content: `*presses ${key}*` };
     const updated = [...messages, userMsg];
     setMessages(updated);
     sendToAI(updated, key);
-  }, [isLoading, messages, sendToAI]);
+  }, [isLoading, isRevealing, messages, sendToAI]);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
