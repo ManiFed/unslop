@@ -235,9 +235,16 @@ const SlopHotline = () => {
                             : "border-l-2 border-crisis text-foreground/90 mr-8"
                         }`}>
                         {msg.role === "assistant" ? (
-                          <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-snug">
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
-                          </div>
+                          !msg.revealed ? (
+                            <TypewriterMessage content={msg.content} onComplete={() => {
+                              setMessages(prev => prev.map((m, j) => j === i ? { ...m, revealed: true } : m));
+                              setIsRevealing(false);
+                            }} />
+                          ) : (
+                            <div className="prose prose-sm prose-invert max-w-none [&>p]:m-0 [&>p]:leading-snug">
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                          )
                         ) : msg.content}
                       </motion.div>
                     ))}
