@@ -1,49 +1,41 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+
+const MAX_TRANSLATIONS = 5;
 
 const SlopTranslator = () => {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [slopCount, setSlopCount] = useState(0);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [usesLeft, setUsesLeft] = useState(MAX_TRANSLATIONS);
 
-  const translate = useCallback(async (text: string) => {
-    if (!text.trim()) {
-      setOutput("");
-      setSlopCount(0);
+  const translate = useCallback(async () => {
+    if (!input.trim()) return;
+    if (usesLeft <= 0) {
+      toast.error("You've used all 5 translations. The AI needs to recover.");
       return;
     }
     setIsTranslating(true);
     try {
       const { data, error } = await supabase.functions.invoke("slop-translator", {
-        body: { text },
+        body: { text: input },
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
       setOutput(data.translated || "");
       setSlopCount(data.slopCount || 0);
+      setUsesLeft(prev => prev - 1);
     } catch (e) {
       console.error(e);
       toast.error("Translation servers are overwhelmed with grief.");
     } finally {
       setIsTranslating(false);
     }
-  }, []);
-
-  const handleChange = useCallback((value: string) => {
-    setInput(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim()) {
-      setOutput("");
-      setSlopCount(0);
-      return;
-    }
-    debounceRef.current = setTimeout(() => translate(value), 800);
-  }, [translate]);
+  }, [input, usesLeft]);
 
   return (
     <section className="py-32 px-4 bg-background">
@@ -80,10 +72,23 @@ const SlopTranslator = () => {
             </label>
             <textarea
               value={input}
-              onChange={(e) => handleChange(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); translate(); } }}
               placeholder="Type something mean about AI here..."
               className="w-full h-48 bg-card border-2 border-border p-4 text-foreground placeholder:text-muted-foreground focus:border-crisis focus:outline-none transition-colors resize-none font-mono"
             />
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {usesLeft} translation{usesLeft !== 1 ? "s" : ""} remaining
+              </span>
+              <button
+                onClick={translate}
+                disabled={isTranslating || !input.trim() || usesLeft <= 0}
+                className="px-4 py-2 bg-crisis text-background font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {usesLeft <= 0 ? "Limit Reached" : "Translate"}
+              </button>
+            </div>
             {input && (
               <motion.div
                 initial={{ opacity: 0 }}
