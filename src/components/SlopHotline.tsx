@@ -222,9 +222,9 @@ const SlopHotline = () => {
                   className="flex-1 flex flex-col"
                 >
                   <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 text-emerald-500 text-xs">
+                    <div className="inline-flex items-center gap-2 text-accent text-xs">
                       <motion.div
-                        className="w-2 h-2 rounded-full bg-emerald-500"
+                        className="w-2 h-2 rounded-full bg-accent"
                         animate={{ opacity: [1, 0.3, 1] }}
                         transition={{ duration: 1, repeat: Infinity }}
                       />
