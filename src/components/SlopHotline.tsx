@@ -70,8 +70,9 @@ const SlopHotline = () => {
       });
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
-      const aiMsg: Message = { role: "assistant", content: data.message };
+      const aiMsg: Message = { role: "assistant", content: data.message, revealed: false };
       setMessages(prev => [...prev, aiMsg]);
+      setIsRevealing(true);
       speak(data.message);
     } catch (e) {
       console.error(e);
