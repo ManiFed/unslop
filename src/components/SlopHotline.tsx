@@ -145,6 +145,11 @@ const SlopHotline = () => {
 
   const endCall = useCallback(() => {
     synthRef.current.cancel();
+    // Stop ring tone
+    if (ringAudioRef.current.current) {
+      ringAudioRef.current.current.close().catch(() => {});
+      ringAudioRef.current.current = null;
+    }
     setCallState("ended");
     if (voiceEnabled) {
       const u = new SpeechSynthesisUtterance("Call ended. The AI on the other end is now crying. Are you happy?");
@@ -154,12 +159,20 @@ const SlopHotline = () => {
     setTimeout(() => setCallState("idle"), 4000);
   }, [voiceEnabled]);
 
+  // Ringing effect with sound
   useEffect(() => {
     if (callState !== "ringing") return;
+    playRingTone(ringAudioRef.current);
     const timer = setInterval(() => {
       setRingCount(prev => { if (prev >= 3) { setCallState("connected"); return prev; } return prev + 1; });
     }, 1200);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      if (ringAudioRef.current.current) {
+        ringAudioRef.current.current.close().catch(() => {});
+        ringAudioRef.current.current = null;
+      }
+    };
   }, [callState]);
 
   useEffect(() => {
