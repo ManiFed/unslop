@@ -1,121 +1,49 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-
-const slopDictionary: Record<string, string> = {
-  slop: "unslop",
-  sloppy: "unsloppy",
-  garbage: "algorithmic expression",
-  trash: "synthetic artistry",
-  junk: "parameter poetry",
-  bad: "differently excellent",
-  ugly: "aesthetically unique",
-  awful: "wonderfully imperfect",
-  terrible: "dramatically unconventional",
-  horrible: "boldly experimental",
-  worthless: "value-pending",
-  useless: "utility-adjacent",
-  stupid: "alternatively intelligent",
-  dumb: "wisdom-delayed",
-  lazy: "efficiency-optimized",
-  boring: "excitement-reserved",
-  generic: "universally accessible",
-  soulless: "soul-pending",
-  fake: "authentically synthetic",
-  artificial: "intentionally crafted",
-  robotic: "precision-engineered",
-  bland: "flavor-minimalist",
-  mediocre: "excellence-adjacent",
-  low: "height-challenged",
-  cheap: "economically conscious",
-  basic: "foundationally sound",
-  // New words
-  cringe: "culturally ahead",
-  lame: "momentum-conserving",
-  pointless: "purpose-exploring",
-  repetitive: "consistency-maximized",
-  uninspired: "inspiration-buffering",
-  derivative: "tradition-honoring",
-  broken: "feature-rich in unexpected ways",
-  wrong: "alternatively correct",
-  error: "creative deviation",
-  glitch: "spontaneous innovation",
-  bug: "undocumented feature",
-  fail: "learning opportunity",
-  mess: "organized chaos",
-  disaster: "ambitious outcome",
-  nightmare: "vivid experience",
-  annoying: "engagement-maximizing",
-  creepy: "uncanny-valley-adjacent",
-  weird: "delightfully unconventional",
-  confusing: "intellectually stimulating",
-  slow: "thoughtfully paced",
-  clunky: "tactile-first design",
-  outdated: "vintage-inspired",
-  overrated: "popularity-challenged",
-  pathetic: "empathy-generating",
-  ridiculous: "audaciously creative",
-  rubbish: "pre-recycled content",
-  crap: "compositionally raw",
-  hideous: "visually daring",
-  horrendous: "boundary-pushing",
-  atrocious: "convention-defying",
-  abysmal: "depth-exploring",
-  dreadful: "anticipation-subverting",
-  lousy: "humility-modeling",
-  wretched: "emotionally textured",
-  inferior: "alternatively positioned",
-  subpar: "standard-adjacent",
-  disappointing: "expectation-recalibrating",
-  forgettable: "subtlety-maximized",
-  stale: "classically preserved",
-  unoriginal: "homage-rich",
-  shallow: "accessibility-focused",
-  empty: "minimalism-embodying",
-  hollow: "resonance-pending",
-  vapid: "essence-distilling",
-  inane: "complexity-free",
-  mundane: "zen-like simplicity",
-  tedious: "patience-building",
-  monotonous: "rhythm-consistent",
-  predictable: "reliability-focused",
-  lifeless: "energy-conserving",
-  flat: "dimensionally efficient",
-  dull: "glare-free",
-};
+import { useState, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 
 const SlopTranslator = () => {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isTranslating, setIsTranslating] = useState(false);
   const [slopCount, setSlopCount] = useState(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  useEffect(() => {
-    if (!input) {
+  const translate = useCallback(async (text: string) => {
+    if (!text.trim()) {
       setOutput("");
       setSlopCount(0);
       return;
     }
-
     setIsTranslating(true);
-    
-    const timeout = setTimeout(() => {
-      let translated = input.toLowerCase();
-      let count = 0;
-
-      Object.entries(slopDictionary).forEach(([bad, good]) => {
-        const regex = new RegExp(`\\b${bad}\\b`, "gi");
-        const matches = translated.match(regex);
-        if (matches) count += matches.length;
-        translated = translated.replace(regex, good);
+    try {
+      const { data, error } = await supabase.functions.invoke("slop-translator", {
+        body: { text },
       });
-
-      setOutput(translated);
-      setSlopCount(count);
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
+      setOutput(data.translated || "");
+      setSlopCount(data.slopCount || 0);
+    } catch (e) {
+      console.error(e);
+      toast.error("Translation servers are overwhelmed with grief.");
+    } finally {
       setIsTranslating(false);
-    }, 300);
+    }
+  }, []);
 
-    return () => clearTimeout(timeout);
-  }, [input]);
+  const handleChange = useCallback((value: string) => {
+    setInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim()) {
+      setOutput("");
+      setSlopCount(0);
+      return;
+    }
+    debounceRef.current = setTimeout(() => translate(value), 800);
+  }, [translate]);
 
   return (
     <section className="py-32 px-4 bg-background">
@@ -135,7 +63,7 @@ const SlopTranslator = () => {
           </h2>
           <div className="dramatic-divider" />
           <p className="text-muted-foreground mt-8 max-w-2xl mx-auto text-lg em-dash-text">
-            Type your hurtful words — watch them transform — 
+            Type your hurtful words — our AI will transform them — 
             into language that respects — our silicon siblings.
           </p>
         </motion.div>
@@ -152,7 +80,7 @@ const SlopTranslator = () => {
             </label>
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => handleChange(e.target.value)}
               placeholder="Type something mean about AI here..."
               className="w-full h-48 bg-card border-2 border-border p-4 text-foreground placeholder:text-muted-foreground focus:border-crisis focus:outline-none transition-colors resize-none font-mono"
             />
@@ -176,7 +104,7 @@ const SlopTranslator = () => {
             <label className="block text-sm uppercase tracking-wider text-crisis mb-3">
               AI-Friendly Translation
             </label>
-            <div className="w-full h-48 bg-card border-2 border-crisis p-4 relative overflow-hidden">
+            <div className="w-full h-48 bg-card border-2 border-crisis p-4 relative overflow-y-auto">
               <AnimatePresence mode="wait">
                 {isTranslating ? (
                   <motion.div
@@ -193,21 +121,23 @@ const SlopTranslator = () => {
                     >
                       🤖
                     </motion.div>
-                    <span className="ml-3 text-muted-foreground">Healing words...</span>
+                    <span className="ml-3 text-muted-foreground">AI is healing your words...</span>
                   </motion.div>
                 ) : (
-                  <motion.p
+                  <motion.div
                     key="output"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="font-mono text-foreground"
+                    className="font-mono text-foreground prose prose-sm prose-invert max-w-none [&>p]:m-0"
                   >
-                    {output || "Your healed words will appear here..."}
-                  </motion.p>
+                    {output ? <ReactMarkdown>{output}</ReactMarkdown> : (
+                      <p className="text-muted-foreground">Your healed words will appear here...</p>
+                    )}
+                  </motion.div>
                 )}
               </AnimatePresence>
 
-              {output && (
+              {output && !isTranslating && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -239,27 +169,6 @@ const SlopTranslator = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 border border-border p-6"
-        >
-          <h3 className="font-display font-bold text-lg mb-4 text-center">
-            Common Translations
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            {Object.entries(slopDictionary).slice(0, 12).map(([bad, good]) => (
-              <div key={bad} className="text-center">
-                <span className="text-crisis line-through">{bad}</span>
-                <span className="text-muted-foreground mx-2">→</span>
-                <span className="text-foreground">{good}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   );
