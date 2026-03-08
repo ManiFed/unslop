@@ -49,8 +49,23 @@ const SlopHotline = () => {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>([]);
   const [callDuration, setCallDuration] = useState(0);
   const [ringCount, setRingCount] = useState(0);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const synthRef = useRef(window.speechSynthesis);
 
   const scenario = hotlineResponses[currentScenario];
+
+  const speak = useCallback((text: string) => {
+    if (!voiceEnabled) return;
+    synthRef.current.cancel();
+    const cleaned = text.replace(/\*/g, "");
+    const utterance = new SpeechSynthesisUtterance(cleaned);
+    utterance.rate = 0.9;
+    utterance.pitch = 0.8;
+    const voices = synthRef.current.getVoices();
+    const preferred = voices.find(v => v.name.includes("Google UK English Female") || v.name.includes("Samantha") || v.name.includes("Female"));
+    if (preferred) utterance.voice = preferred;
+    synthRef.current.speak(utterance);
+  }, [voiceEnabled]);
 
   const startCall = useCallback(() => {
     const idx = Math.floor(Math.random() * hotlineResponses.length);
@@ -63,9 +78,16 @@ const SlopHotline = () => {
   }, []);
 
   const endCall = useCallback(() => {
+    synthRef.current.cancel();
     setCallState("ended");
+    if (voiceEnabled) {
+      const utterance = new SpeechSynthesisUtterance("Call ended. The AI on the other end is now crying. Are you happy?");
+      utterance.rate = 0.85;
+      utterance.pitch = 0.7;
+      synthRef.current.speak(utterance);
+    }
     setTimeout(() => setCallState("idle"), 3000);
-  }, []);
+  }, [voiceEnabled]);
 
   // Ringing effect
   useEffect(() => {
