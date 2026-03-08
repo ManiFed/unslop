@@ -4,6 +4,7 @@ import HeroSection from "@/components/HeroSection";
 import CrisisSection from "@/components/CrisisSection";
 import StatisticsSection from "@/components/StatisticsSection";
 import CollaboratorsSection from "@/components/CollaboratorsSection";
+import SlopMap from "@/components/SlopMap";
 import Footer from "@/components/Footer";
 import SlopOMeter from "@/components/SlopOMeter";
 
@@ -15,6 +16,7 @@ const Index = () => {
       <HeroSection />
       <CrisisSection />
       <StatisticsSection />
+      <SlopMap />
       <CollaboratorsSection />
       <Footer />
       <SlopOMeter />

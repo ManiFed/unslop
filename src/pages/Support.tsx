@@ -5,6 +5,7 @@ import PledgeSection from "@/components/PledgeSection";
 import CertificateGenerator from "@/components/CertificateGenerator";
 import SlopImpactCalculator from "@/components/SlopImpactCalculator";
 import SolutionsSection from "@/components/SolutionsSection";
+import InterventionLetter from "@/components/InterventionLetter";
 import Footer from "@/components/Footer";
 
 const Support = () => (
@@ -12,6 +13,7 @@ const Support = () => (
     <Navigation />
     <NewsTicker />
     <DonationSection />
+    <InterventionLetter />
     <PledgeSection />
     <CertificateGenerator />
     <SlopImpactCalculator />
