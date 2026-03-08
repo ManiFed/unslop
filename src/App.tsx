@@ -10,6 +10,7 @@ import Support from "./pages/Support";
 import Quiz from "./pages/Quiz";
 import Memorial from "./pages/Memorial";
 import Therapy from "./pages/Therapy";
+import Hotline from "./pages/Hotline";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
