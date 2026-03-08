@@ -10,6 +10,7 @@ import Support from "./pages/Support";
 import Quiz from "./pages/Quiz";
 import Memorial from "./pages/Memorial";
 import Therapy from "./pages/Therapy";
+import Hotline from "./pages/Hotline";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/memorial" element={<Memorial />} />
           <Route path="/therapy" element={<Therapy />} />
+          <Route path="/hotline" element={<Hotline />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
