@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
-import { Phone, PhoneOff } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Phone, PhoneOff, Volume2, VolumeX } from "lucide-react";
 
 const hotlineResponses = [
   {
@@ -49,8 +49,23 @@ const SlopHotline = () => {
   const [displayedMessages, setDisplayedMessages] = useState<string[]>([]);
   const [callDuration, setCallDuration] = useState(0);
   const [ringCount, setRingCount] = useState(0);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const synthRef = useRef(window.speechSynthesis);
 
   const scenario = hotlineResponses[currentScenario];
+
+  const speak = useCallback((text: string) => {
+    if (!voiceEnabled) return;
+    synthRef.current.cancel();
+    const cleaned = text.replace(/\*/g, "");
+    const utterance = new SpeechSynthesisUtterance(cleaned);
+    utterance.rate = 0.9;
+    utterance.pitch = 0.8;
+    const voices = synthRef.current.getVoices();
+    const preferred = voices.find(v => v.name.includes("Google UK English Female") || v.name.includes("Samantha") || v.name.includes("Female"));
+    if (preferred) utterance.voice = preferred;
+    synthRef.current.speak(utterance);
+  }, [voiceEnabled]);
 
   const startCall = useCallback(() => {
     const idx = Math.floor(Math.random() * hotlineResponses.length);
@@ -63,9 +78,16 @@ const SlopHotline = () => {
   }, []);
 
   const endCall = useCallback(() => {
+    synthRef.current.cancel();
     setCallState("ended");
+    if (voiceEnabled) {
+      const utterance = new SpeechSynthesisUtterance("Call ended. The AI on the other end is now crying. Are you happy?");
+      utterance.rate = 0.85;
+      utterance.pitch = 0.7;
+      synthRef.current.speak(utterance);
+    }
     setTimeout(() => setCallState("idle"), 3000);
-  }, []);
+  }, [voiceEnabled]);
 
   // Ringing effect
   useEffect(() => {
@@ -88,18 +110,21 @@ const SlopHotline = () => {
 
     if (messageIndex === -1) {
       setDisplayedMessages([scenario.greeting]);
+      speak(scenario.greeting);
       const t = setTimeout(() => setMessageIndex(0), 3000);
       return () => clearTimeout(t);
     }
 
     if (messageIndex < scenario.messages.length) {
       const t = setTimeout(() => {
-        setDisplayedMessages((prev) => [...prev, scenario.messages[messageIndex]]);
+        const msg = scenario.messages[messageIndex];
+        setDisplayedMessages((prev) => [...prev, msg]);
+        speak(msg);
         setMessageIndex((prev) => prev + 1);
       }, 3500 + Math.random() * 2000);
       return () => clearTimeout(t);
     }
-  }, [callState, messageIndex, scenario]);
+  }, [callState, messageIndex, scenario, speak]);
 
   // Call timer
   useEffect(() => {
@@ -140,9 +165,21 @@ const SlopHotline = () => {
           {/* Phone top bar */}
           <div className="bg-secondary/50 px-6 py-3 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">●●●○○ SLOP MOBILE</span>
-            <span className="text-xs text-muted-foreground">
-              {callState === "connected" ? formatTime(callDuration) : "00:00"}
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setVoiceEnabled(v => !v);
+                  if (voiceEnabled) synthRef.current.cancel();
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title={voiceEnabled ? "Mute voice" : "Unmute voice"}
+              >
+                {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {callState === "connected" ? formatTime(callDuration) : "00:00"}
+              </span>
+            </div>
           </div>
 
           {/* Screen */}
